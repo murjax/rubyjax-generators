@@ -1,0 +1,9 @@
+{
+  "model_name": "User",
+  "columns": [
+    {"name": "email", "type": "string", "null": false},
+    {"name": "first_name", "type": "string"},
+    {"name": "last_name", "type": "string"}
+  ],
+  "primary_field": "email"
+}

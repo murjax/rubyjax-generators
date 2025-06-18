@@ -1,0 +1,21 @@
+<nav class="my-3 flex justify-center" data-test-id="pagination">
+  <ul class="inline-flex -space-x-px">
+    <li>
+      <%= link_to "Previous", request.params.merge(page: [records.current_page - 1, 1].max), class: "py-2 px-3 ml-0 leading-tight text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white", data: { test_id: "previous-page" } %>
+    </li>
+    <% page_range(records.current_page, records.total_pages).each do |page_number| %>
+      <% if page_number == records.current_page %>
+        <li>
+          <%= link_to page_number, request.params.merge(page: page_number), class: "py-2 px-3 text-blue-600 bg-blue-50 border border-gray-300 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white" %>
+        </li>
+      <% else %>
+        <li>
+          <%= link_to page_number, request.params.merge(page: page_number), class: "py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white" %>
+        </li>
+      <% end %>
+    <% end %>
+    <li>
+      <%= link_to "Next", request.params.merge(page: [records.current_page + 1, records.total_pages].min), class: "py-2 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white", data: { test_id: "next-page" } %>
+    </li>
+  </ul>
+</nav>

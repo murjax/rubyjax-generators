@@ -1,0 +1,9 @@
+{
+  "model_name": "Order",
+  "columns": [
+    {"name": "number", "type": "integer", "null": false},
+    {"name": "user", "type": "reference", "null": false, "display_field": "email"},
+    {"name": "item", "type": "reference", "null": false, "display_field": "name"}
+  ],
+  "primary_field": "number"
+}
