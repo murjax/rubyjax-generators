@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rails Generator Hook Relationships</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        background: #f7fafc;
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e2e8f0;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #2d3748;
+        font-size: 2.5rem;
+        font-weight: 700;
+      }
+
+      .tree {
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .framework {
+        margin-bottom: 25px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+      }
+
+      .framework:hover {
+        transform: translateY(-2px);
+      }
+
+      .framework-header {
+        padding: 15px 20px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.3s ease;
+      }
+
+      .framework-header:hover {
+        transform: scale(1.02);
+      }
+
+      .rails { background: #dc3545; color: white; }
+      .activerecord { background: #28a745; color: white; }
+      .actionmailer { background: #007bff; color: white; }
+      .actionmailbox { background: #20c997; color: white; }
+      .activejob { background: #ffc107; color: black; }
+      .erb { background: #fd7e14; color: white; }
+      .actioncable { background: #6f42c1; color: white; }
+
+      .expand-icon {
+        transition: transform 0.3s ease;
+        font-size: 12px;
+      }
+
+      .framework.expanded .expand-icon {
+        transform: rotate(90deg);
+      }
+
+      .generators {
+        background: rgba(255, 255, 255, 0.95);
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out, padding 0.3s ease;
+      }
+
+      .framework.expanded .generators {
+        max-height: 2000px;
+        padding: 20px;
+      }
+
+      .generator {
+        margin: 12px 0;
+        padding: 12px 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #6c757d;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      .generator:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .generator-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .github-link {
+        color: #495057;
+        text-decoration: none;
+        font-size: 12px;
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+      }
+
+      .github-link:hover {
+        opacity: 1;
+        text-decoration: underline;
+      }
+
+      .hooks {
+        margin-top: 8px;
+        padding-left: 20px;
+      }
+
+      .hook {
+        display: inline-block;
+        background: #6c757d;
+        color: white;
+        padding: 4px 10px;
+        margin: 2px 4px 2px 0;
+        border-radius: 15px;
+        font-size: 11px;
+        font-weight: 500;
+        transition: transform 0.2s ease;
+      }
+
+      .hook:hover {
+        transform: scale(1.05);
+        cursor: pointer;
+      }
+
+      .no-hooks {
+        color: #a0aec0;
+        font-style: italic;
+        font-size: 12px;
+      }
+
+      .stats {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        border: 1px solid #e9ecef;
+      }
+
+      .stat {
+        text-align: center;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+      }
+
+      .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #495057;
+      }
+
+      .stat-label {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-top: 5px;
+      }
+
+      .search-box {
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.3s ease;
+      }
+
+      .search-input:focus {
+        border-color: #6c757d;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Rails Generator Hook Relationships</h1>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-number" id="totalGenerators">0</div>
+          <div class="stat-label">Total Generators</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number" id="totalHooks">0</div>
+          <div class="stat-label">Total Hook Calls</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number" id="frameworkCount">0</div>
+          <div class="stat-label">Frameworks</div>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <input type="text" class="search-input" placeholder="Search generators..." id="searchInput">
+      </div>
+
+      <div class="tree" id="tree">
+        <!-- Rails Framework -->
+        <div class="framework rails" data-framework="rails">
+          <div class="framework-header">
+            <span>Rails</span>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="generators">
+            <div class="generator" data-name="application_record">
+              <div class="generator-name">
+                application_record
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/application_record" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">orm/application_record</span>
+              </div>
+            </div>
+            <div class="generator" data-name="authentication">
+              <div class="generator-name">
+                authentication
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/authentication" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">template_engine/authentication</span>
+              </div>
+            </div>
+            <div class="generator" data-name="benchmark">
+              <div class="generator-name">
+                benchmark
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/benchmark" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+            <div class="generator" data-name="controller">
+              <div class="generator-name">
+                controller
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/controller" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">template_engine/controller</span>
+                <span class="hook">test_framework/controller</span>
+                <span class="hook">helper</span>
+              </div>
+            </div>
+            <div class="generator" data-name="generator">
+              <div class="generator-name">
+                generator
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/generator" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+            <div class="generator" data-name="helper">
+              <div class="generator-name">
+                helper
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/helper" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">test_framework/helper</span>
+              </div>
+            </div>
+            <div class="generator" data-name="model">
+              <div class="generator-name">
+                model
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/model" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">orm/model</span>
+              </div>
+            </div>
+            <div class="generator" data-name="migration">
+              <div class="generator-name">
+                migration
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/migration" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">orm/migration</span>
+              </div>
+            </div>
+            <div class="generator" data-name="scaffold">
+              <div class="generator-name">
+                scaffold
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/scaffold" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">scaffold_controller</span>
+              </div>
+            </div>
+            <div class="generator" data-name="scaffold_controller">
+              <div class="generator-name">
+                scaffold_controller
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/scaffold_controller" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">template_engine/scaffold</span>
+                <span class="hook">resource_route</span>
+                <span class="hook">test_framework/scaffold</span>
+                <span class="hook">helper</span>
+              </div>
+            </div>
+            <div class="generator" data-name="resource">
+              <div class="generator-name">
+                resource
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/resource" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">resource_route</span>
+                <span class="hook">resource_controller</span>
+              </div>
+            </div>
+            <div class="generator" data-name="script">
+              <div class="generator-name">
+                script
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/script" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+            <div class="generator" data-name="task">
+              <div class="generator-name">
+                task
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/task" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+            <div class="generator" data-name="integration_test">
+              <div class="generator-name">
+                integration_test
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/integration_test" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">integration_tool</span>
+              </div>
+            </div>
+            <div class="generator" data-name="system_test">
+              <div class="generator-name">
+                system_test
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/rails/system_test" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">system_tests</span>
+              </div>
+            </div>
+            <div class="generator" data-name="test_unit">
+              <div class="generator-name">
+                test_unit
+                <a href="https://github.com/rails/rails/tree/main/railties/lib/rails/generators/test_unit" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">controller</span>
+                <span class="hook">generator</span>
+                <span class="hook">scaffold</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ActiveRecord Framework -->
+        <div class="framework activerecord" data-framework="activerecord">
+          <div class="framework-header">
+            <span>ActiveRecord</span>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="generators">
+            <div class="generator" data-name="application_record">
+              <div class="generator-name">
+                application_record
+                <a href="https://github.com/rails/rails/tree/main/activerecord/lib/rails/generators/active_record/application_record" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+            <div class="generator" data-name="model">
+              <div class="generator-name">
+                model
+                <a href="https://github.com/rails/rails/tree/main/activerecord/lib/rails/generators/active_record/model" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">test_framework</span>
+              </div>
+            </div>
+            <div class="generator" data-name="migration">
+              <div class="generator-name">
+                migration
+                <a href="https://github.com/rails/rails/tree/main/activerecord/lib/rails/generators/active_record/migration" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ActionMailer Framework -->
+        <div class="framework actionmailer" data-framework="actionmailer">
+          <div class="framework-header">
+            <span>ActionMailer</span>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="generators">
+            <div class="generator" data-name="mailer">
+              <div class="generator-name">
+                mailer
+                <a href="https://github.com/rails/rails/tree/main/actionmailer/lib/rails/generators/mailer" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ActionMailbox Framework -->
+        <div class="framework actionmailbox" data-framework="actionmailbox">
+          <div class="framework-header">
+            <span>ActionMailbox</span>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="generators">
+            <div class="generator" data-name="mailbox">
+              <div class="generator-name">
+                mailbox
+                <a href="https://github.com/rails/rails/tree/main/actionmailbox/lib/rails/generators/mailbox" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">test_framework/mailbox</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ActiveJob Framework -->
+        <div class="framework activejob" data-framework="activejob">
+          <div class="framework-header">
+            <span>ActiveJob</span>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="generators">
+            <div class="generator" data-name="job">
+              <div class="generator-name">
+                job
+                <a href="https://github.com/rails/rails/tree/main/activejob/lib/rails/generators/job" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">test_framework/job</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ERB Framework -->
+        <div class="framework erb" data-framework="erb">
+          <div class="framework-header">
+            <span>ERB</span>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="generators">
+            <div class="generator" data-name="authentication">
+              <div class="generator-name">
+                authentication
+                <a href="https://github.com/rails/rails/tree/main/actionview/lib/rails/generators/erb/authentication" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+            <div class="generator" data-name="controller">
+              <div class="generator-name">
+                controller
+                <a href="https://github.com/rails/rails/tree/main/actionview/lib/rails/generators/erb/controller" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+            <div class="generator" data-name="scaffold">
+              <div class="generator-name">
+                scaffold
+                <a href="https://github.com/rails/rails/tree/main/actionview/lib/rails/generators/erb/scaffold" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="no-hooks">No hooks</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ActionCable Framework -->
+        <div class="framework actioncable" data-framework="actioncable">
+          <div class="framework-header">
+            <span>ActionCable</span>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="generators">
+            <div class="generator" data-name="channel">
+              <div class="generator-name">
+                channel
+                <a href="https://github.com/rails/rails/tree/main/actioncable/lib/rails/generators/channel" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">test_framework/channel</span>
+              </div>
+            </div>
+            <div class="generator" data-name="test_unit">
+              <div class="generator-name">
+                test_unit
+                <a href="https://github.com/rails/rails/tree/main/actioncable/lib/rails/generators/test_unit" class="github-link" target="_blank">📁 View Source</a>
+              </div>
+              <div class="hooks">
+                <span class="hook">channel</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Framework expansion functionality
+      document.querySelectorAll('.framework-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const framework = header.parentElement;
+          framework.classList.toggle('expanded');
+        });
+      });
+
+      // Search functionality
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const generators = document.querySelectorAll('.generator');
+        const frameworks = document.querySelectorAll('.framework');
+
+        generators.forEach(generator => {
+          const name = generator.dataset.name.toLowerCase();
+          const hooks = Array.from(generator.querySelectorAll('.hook')).map(hook => hook.textContent.toLowerCase()).join(' ');
+
+          if (name.includes(searchTerm) || hooks.includes(searchTerm)) {
+            generator.classList.remove('hidden');
+          } else {
+            generator.classList.add('hidden');
+          }
+        });
+
+        // Show/hide frameworks based on visible generators
+        frameworks.forEach(framework => {
+          const visibleGenerators = framework.querySelectorAll('.generator:not(.hidden)');
+          if (visibleGenerators.length > 0 || searchTerm === '') {
+            framework.classList.remove('hidden');
+            if (searchTerm !== '') {
+              framework.classList.add('expanded');
+            }
+          } else {
+            framework.classList.add('hidden');
+          }
+        });
+      });
+
+      // Calculate and display statistics
+      function updateStats() {
+        const totalGenerators = document.querySelectorAll('.generator').length;
+        const totalHooks = document.querySelectorAll('.hook:not(.no-hooks)').length;
+        const frameworkCount = document.querySelectorAll('.framework').length;
+
+        document.getElementById('totalGenerators').textContent = totalGenerators;
+        document.getElementById('totalHooks').textContent = totalHooks;
+        document.getElementById('frameworkCount').textContent = frameworkCount;
+      }
+
+      updateStats();
+
+      // Auto-expand all frameworks on load for better UX
+      setTimeout(() => {
+        document.querySelectorAll('.framework').forEach(framework => {
+          framework.classList.add('expanded');
+        });
+      }, 500);
+    </script>
+  </body>
+</html>
