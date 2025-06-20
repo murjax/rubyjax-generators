@@ -5,5 +5,7 @@
     {"name": "first_name", "type": "string"},
     {"name": "last_name", "type": "string"}
   ],
-  "primary_field": "email"
+  "primary_field": "email",
+  "command": "scaffold",
+  "//exampleoutput":  "scaffold User email:string first_name:string last_name:string"
 }

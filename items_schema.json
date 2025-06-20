@@ -4,5 +4,6 @@
     {"name": "name", "type": "string", "null": false},
     {"name": "quantity", "type": "integer", "null": false}
   ],
+  "command": "scaffold",
   "primary_field": "name"
 }

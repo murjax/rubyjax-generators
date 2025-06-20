@@ -22,3 +22,16 @@ Things you may want to cover:
 * Deployment instructions
 
 * ...
+
+## Development Commands
+```bash
+bundle install
+
+rails s
+
+./bin/dev
+
+rails g json orders_schema.json
+
+rails db:migrate
+```

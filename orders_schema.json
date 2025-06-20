@@ -5,5 +5,6 @@
     {"name": "user", "type": "reference", "null": false, "display_field": "email"},
     {"name": "item", "type": "reference", "null": false, "display_field": "name"}
   ],
+  "command": "scaffold",
   "primary_field": "number"
 }
